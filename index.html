@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Kaisse — Gestion Bar &amp; Restaurant</title>
+<meta name="theme-color" content="#1C1712">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===== BARRE SUPÉRIEURE ===== -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <span class="brand-mark">K</span>
+      <span class="brand-name">Kaisse</span>
+    </div>
+    <div class="topbar-right">
+      <div id="netStatus" class="net-badge net-online">
+        <span class="net-dot"></span>
+        <span class="net-label">En ligne</span>
+      </div>
+      <button id="syncBadge" class="sync-badge hidden">
+        <span id="syncCount">0</span> à synchroniser
+      </button>
+      <button id="lockAppBtn" class="icon-btn" title="Verrouiller l'application">
+        <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== ZONE PRINCIPALE ===== -->
+  <main id="mainArea" class="main-area"></main>
+
+  <!-- ===== NAVIGATION BASSE ===== -->
+  <nav class="tabbar">
+    <button class="tab-btn active" data-view="caisse">
+      <svg viewBox="0 0 24 24"><path d="M3 7h18M3 12h18M3 17h12"/></svg>
+      <span>Caisse</span>
+    </button>
+    <button class="tab-btn" data-view="salle">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Salle</span>
+    </button>
+    <button class="tab-btn" data-view="stock">
+      <svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+      <span>Stock</span>
+    </button>
+    <button class="tab-btn" data-view="rapports">
+      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-4"/></svg>
+      <span>Rapports</span>
+    </button>
+    <button class="tab-btn" data-view="parametres">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      <span>Réglages</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- ===== TEMPLATES ===== -->
+
+<template id="tpl-caisse">
+  <div class="view view-caisse">
+    <div class="caisse-layout">
+      <div class="caisse-catalogue">
+        <div class="cat-chips" id="catChips"></div>
+        <div class="product-grid" id="productGrid"></div>
+      </div>
+      <div class="caisse-ticket">
+        <div class="ticket-head">
+          <h2 id="ticketTitle">Vente directe</h2>
+          <button class="icon-btn" id="clearTicket" title="Vider le ticket">
+            <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>
+          </button>
+        </div>
+        <div class="ticket-lines" id="ticketLines">
+          <p class="ticket-empty">Aucun article. Touchez un produit pour l'ajouter.</p>
+        </div>
+        <div class="ticket-summary">
+          <div class="sum-row"><span>Sous-total</span><span id="sumSubtotal">0 Ar</span></div>
+          <div class="sum-row sum-total"><span>Total</span><span id="sumTotal">0 Ar</span></div>
+        </div>
+        <div class="ticket-actions">
+          <button class="btn btn-secondary" id="btnSendKitchen">Envoyer en cuisine</button>
+          <button class="btn btn-secondary" id="btnHold">Mettre en attente</button>
+          <button class="btn btn-primary" id="btnPay">Encaisser</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-salle">
+  <div class="view view-salle">
+    <div class="salle-head">
+      <h2>Plan de salle</h2>
+      <button class="btn btn-sm btn-outline" id="btnAddTable">+ Table</button>
+    </div>
+    <div class="table-grid" id="tableGrid"></div>
+  </div>
+</template>
+
+<template id="tpl-stock">
+  <div class="view view-stock">
+    <div class="stock-head">
+      <h2>Stock</h2>
+      <button class="btn btn-sm btn-outline" id="btnAddProduct">+ Produit</button>
+    </div>
+    <div class="stock-list" id="stockList"></div>
+  </div>
+</template>
+
+<template id="tpl-rapports">
+  <div class="view view-rapports">
+    <h2>Rapports</h2>
+    <div class="report-cards" id="reportCards"></div>
+    <div class="report-section">
+      <h3>Ventes des 7 derniers jours</h3>
+      <div id="weekChart" class="week-chart"></div>
+    </div>
+    <div class="report-section">
+      <h3>Bilan du mois</h3>
+      <div class="report-cards" id="monthCards"></div>
+      <button class="btn btn-outline" id="btnMonthlyReportA4" style="width:100%; margin-top:10px;">Générer le bilan du mois (format A4)</button>
+    </div>
+    <div class="report-section">
+      <h3>Meilleures ventes</h3>
+      <div id="topProducts" class="top-list"></div>
+    </div>
+    <div class="report-section">
+      <h3>Historique des ventes</h3>
+      <div id="salesHistory" class="history-list"></div>
+    </div>
+    <div class="report-section">
+      <h3>Fermeture de caisse</h3>
+      <div class="closure-buttons">
+        <button class="btn btn-secondary" id="btnShowX">Rapport X</button>
+        <button class="btn btn-primary" id="btnShowZ" style="background:var(--danger); color:#fff;">Clôture Z</button>
+      </div>
+      <p class="settings-hint" style="margin-top:8px;">Le rapport X consulte le bilan en cours sans rien clôturer. La clôture Z fige les ventes du moment et remet le compteur à zéro.</p>
+    </div>
+    <div class="report-section">
+      <h3>Historique des clôtures Z</h3>
+      <div id="zHistory" class="history-list"></div>
+    </div>
+    <div class="report-section">
+      <h3>Sauvegarde des données</h3>
+      <button class="btn btn-outline" id="btnExportBackup" style="width:100%;">Télécharger une sauvegarde (.json)</button>
+      <p class="settings-hint" style="margin-top:8px;">Enregistre un fichier avec toutes vos données (produits, ventes, réglages) sur cet appareil, dans vos Téléchargements.</p>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-parametres">
+  <div class="view view-parametres">
+    <h2>Réglages</h2>
+    <div class="settings-card">
+      <div class="settings-row">
+        <div><strong>Nom de l'établissement</strong><p class="settings-hint">Affiché sur les tickets</p></div>
+        <input type="text" id="settingShopName" class="input-inline" placeholder="Mon Restobar">
+      </div>
+      <div class="settings-row">
+        <div><strong>Devise</strong><p class="settings-hint">Utilisée pour tous les montants</p></div>
+        <select id="settingCurrency" class="input-inline">
+          <option value="Ar">Ariary (Ar)</option>
+          <option value="€">Euro (€)</option>
+          <option value="$">Dollar ($)</option>
+        </select>
+      </div>
+      <div class="settings-row">
+        <div><strong>Thème</strong><p class="settings-hint">Apparence générale de l'application</p></div>
+        <select id="settingTheme" class="input-inline">
+          <option value="dark">Sombre</option>
+          <option value="light">Clair</option>
+        </select>
+      </div>
+      <div class="settings-row">
+        <div><strong>Couleur d'accent</strong><p class="settings-hint">Icônes, prix, boutons principaux</p></div>
+        <input type="color" id="settingAccentColor" class="input-color">
+      </div>
+      <div class="settings-row">
+        <div><strong>Noms des produits</strong><p class="settings-hint">Couleur du texte des noms sur la caisse</p></div>
+        <input type="color" id="settingProductNameColor" class="input-color">
+      </div>
+      <div class="settings-row">
+        <div><strong>Bouton "Encaisser"</strong><p class="settings-hint">Couleur du bouton d'encaissement</p></div>
+        <input type="color" id="settingPayButtonColor" class="input-color">
+      </div>
+      <div class="settings-row" id="textColorRow">
+        <div><strong>Couleur du texte</strong><p class="settings-hint">Texte principal (thème sombre uniquement)</p></div>
+        <input type="color" id="settingTextColor" class="input-color">
+      </div>
+      <div class="settings-row">
+        <div><strong>Imprimantes</strong><p class="settings-hint">Configuration caisse et cuisine</p></div>
+        <button class="btn btn-sm btn-outline" id="btnEditPrinters">Modifier</button>
+      </div>
+      <div class="settings-row">
+        <div><strong>Catégories de produits</strong><p class="settings-hint">Boissons, Plats, Pizza, etc.</p></div>
+        <button class="btn btn-sm btn-outline" id="btnEditCategories">Modifier</button>
+      </div>
+      <div class="settings-row">
+        <div><strong>Accompagnements</strong><p class="settings-hint">Liste proposée à la vente des plats</p></div>
+        <button class="btn btn-sm btn-outline" id="btnEditSides">Modifier</button>
+      </div>
+      <div class="settings-row">
+        <div><strong>Sauces</strong><p class="settings-hint">Liste proposée pour les viandes rouges</p></div>
+        <button class="btn btn-sm btn-outline" id="btnEditSauces">Modifier</button>
+      </div>
+      <div class="settings-row">
+        <div><strong>Informations du ticket</strong><p class="settings-hint">NIF, STAT, contact, adresse, message</p></div>
+        <button class="btn btn-sm btn-outline" id="btnEditReceiptInfo">Modifier</button>
+      </div>
+      <div class="settings-row">
+        <div><strong>Codes d'accès</strong><p class="settings-hint">Code caisse et code administrateur</p></div>
+        <button class="btn btn-sm btn-outline" id="btnChangePins">Modifier</button>
+      </div>
+      <div class="settings-row">
+        <div><strong>Historique des fermetures de caisse</strong><p class="settings-hint">Consulter toutes les clôtures Z passées</p></div>
+        <button class="btn btn-sm btn-outline" id="btnViewZHistory">Consulter</button>
+      </div>
+      <div class="settings-row">
+        <div><strong>Données locales</strong><p class="settings-hint">Tout est stocké hors ligne sur cet appareil</p></div>
+        <button class="btn btn-sm btn-danger-outline" id="btnResetData">Réinitialiser</button>
+      </div>
+    </div>
+    <p class="app-version">Kaisse v1.0 — fonctionne 100% hors ligne</p>
+  </div>
+</template>
+
+<!-- Modale générique -->
+<div id="modalOverlay" class="modal-overlay hidden">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast hidden"></div>
+
+<script src="db.js"></script>
+<script src="app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('sw.js');
+
+      // Vérifie s'il existe une nouvelle version dès l'ouverture.
+      reg.update().catch(() => {});
+
+      // Si un nouveau Service Worker est trouvé, on le fait passer en priorité
+      // dès qu'il est prêt, pour éviter de rester bloqué sur une ancienne version.
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            newWorker.postMessage('SKIP_WAITING');
+          }
+        });
+      });
+
+      // Une fois qu'un nouveau Service Worker prend le contrôle, on recharge
+      // une seule fois pour que la page utilise bien la nouvelle version.
+      let hasReloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (hasReloaded) return;
+        hasReloaded = true;
+        window.location.reload();
+      });
+    } catch (e) {
+      console.error('Service worker registration failed:', e);
+    }
+  });
+}
+</script>
+</body>
+</html>
